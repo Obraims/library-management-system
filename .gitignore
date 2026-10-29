@@ -1,0 +1,21 @@
+# Node & build outputs
+node_modules/
+dist/
+api/dist/
+api/node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+api/.env
+!.env.example
+!api/.env.example
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
