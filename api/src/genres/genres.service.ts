@@ -33,7 +33,14 @@ export class GenresService {
   }
 
   async update(id: string, dto: UpdateGenreDto) {
-    await this.findOne(id);
+    const genre = await this.findOne(id);
+    if (dto.name && dto.name !== genre.name) {
+      const existing = await this.prisma.genre.findUnique({ where: { name: dto.name } });
+      if (existing) {
+        throw new ConflictException('Genre name already exists');
+      }
+    }
+
     return this.prisma.genre.update({
       where: { id },
       data: dto,
@@ -41,7 +48,10 @@ export class GenresService {
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    const genre = await this.findOne(id);
+    if (genre.books.length > 0) {
+      throw new ConflictException('Cannot delete a genre that has books');
+    }
     return this.prisma.genre.delete({ where: { id } });
   }
 }

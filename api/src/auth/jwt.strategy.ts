@@ -6,15 +6,23 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private prisma: PrismaService) {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET must be set');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'super-secret-jwt-key',
+      secretOrKey: secret,
     });
   }
 
-  async validate(payload: { sub: string; email: string; role: string }) {
-    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+  async validate(payload: { sub: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, email: true, name: true, role: true },
+    });
     if (!user) {
       throw new UnauthorizedException('User no longer exists');
     }

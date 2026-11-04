@@ -52,6 +52,16 @@ This repository contains the backend implementation for borrow tracking, study s
 5. **Admin Routes (`/admin/borrow-requests`, `/admin/bookings`)**:
    - Protected with `@Roles(Role.LIBRARIAN)` and `RolesGuard`.
 
+## Week 2: Catalog CRUD and Authentication
+
+- Genre and book CRUD routes are registered by the root application module. Creating, updating, and deleting either resource requires a librarian JWT.
+- `GET /books` accepts `genreId`, `search`, `page`, and `limit`; search matches title and author, and results include pagination metadata.
+- Book and genre request DTOs are validated with `class-validator`.
+- `POST /auth/register` creates patron accounts with bcrypt-hashed passwords. `POST /auth/login` verifies credentials and returns a JWT.
+- Set a unique `JWT_SECRET` in `api/.env` before starting the API. Public registration cannot assign the librarian role.
+- `GET /users/profile` returns the authenticated user's non-sensitive profile.
+- Import `docs/postman_collection.json` to try the week's auth, genre, book, and profile endpoints.
+
 ## Running Unit Tests
 ```bash
 cd api
