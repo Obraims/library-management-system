@@ -1,0 +1,118 @@
+// Prisma Schema Configuration
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PATRON
+  LIBRARIAN
+}
+
+enum BorrowStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+  OVERDUE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String
+  name           String
+  role           Role            @default(PATRON)
+  reviews        Review[]
+  borrowRequests BorrowRequest[]
+  bookings       Booking[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Genre {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  books     Book[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Book {
+  id              String          @id @default(uuid())
+  title           String
+  author          String
+  isbn            String          @unique
+  publishedYr     Int
+  totalCopies     Int             @default(5)
+  availableCopies  Int             @default(5)
+  genreId         String
+  genre           Genre           @relation(fields: [genreId], references: [id])
+  reviews         Review[]
+  borrowRequests  BorrowRequest[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model BorrowRequest {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  bookId      String
+  book        Book         @relation(fields: [bookId], references: [id])
+  status      BorrowStatus @default(PENDING)
+  requestDate DateTime     @default(now())
+  dueDate     DateTime
+  returnDate  DateTime?
+  fineAmount  Float        @default(0.0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Space {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  capacity  Int
+  location  String
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Booking {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  spaceId   String
+  space     Space         @relation(fields: [spaceId], references: [id])
+  date      DateTime
+  startTime DateTime
+  endTime   DateTime
+  purpose   String?
+  status    BookingStatus @default(CONFIRMED)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
