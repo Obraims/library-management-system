@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class BooksService {
@@ -20,10 +21,10 @@ export class BooksService {
 
   async findAll(genreId?: string, search?: string, page: number = 1, limit: number = 10) {
     const pageNum = Math.max(1, Number(page) || 1);
-    const limitNum = Math.max(1, Number(limit) || 10);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 10));
     const skip = (pageNum - 1) * limitNum;
 
-    const where: any = {};
+    const where: Prisma.BookWhereInput = {};
 
     if (genreId) {
       where.genreId = genreId;
@@ -70,7 +71,14 @@ export class BooksService {
   }
 
   async update(id: string, dto: UpdateBookDto) {
-    await this.findOne(id);
+    const book = await this.findOne(id);
+    if (dto.isbn && dto.isbn !== book.isbn) {
+      const existing = await this.prisma.book.findUnique({ where: { isbn: dto.isbn } });
+      if (existing) {
+        throw new ConflictException('Book with this ISBN already exists');
+      }
+    }
+
     return this.prisma.book.update({
       where: { id },
       data: dto,

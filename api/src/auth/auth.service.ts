@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +25,7 @@ export class AuthService {
         email: dto.email,
         name: dto.name,
         password: hashedPassword,
-        role: dto.role || 'PATRON',
+        role: Role.PATRON,
       },
     });
 

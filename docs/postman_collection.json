@@ -1,7 +1,8 @@
 {
   "info": {
     "name": "Library Management System API",
-    "description": "Complete Book API, Auth & Authorization Postman Collection"
+    "description": "Week 2 authentication, genre CRUD, book catalog, and profile endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
@@ -29,9 +30,10 @@
           "name": "Register Patron",
           "request": {
             "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\"email\": \"patron@library.com\", \"password\": \"Password123!\", \"name\": \"Patron User\", \"role\": \"PATRON\"}"
+              "raw": "{\"email\": \"patron@library.com\", \"password\": \"Password123!\", \"name\": \"Patron User\"}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/register"
@@ -42,6 +44,7 @@
           "name": "Login",
           "request": {
             "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\"email\": \"admin@library.com\", \"password\": \"Password123!\"}"
@@ -66,12 +69,52 @@
           }
         },
         {
+          "name": "Get Genre",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/genres/{{genreId}}" }
+          }
+        },
+        {
           "name": "Create Genre",
           "request": {
             "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Science Fiction\"}"
+            },
             "url": {
               "raw": "{{baseUrl}}/genres"
             }
+          }
+        },
+        {
+          "name": "Update Genre",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\": \"Science Fiction & Fantasy\"}"
+            },
+            "url": { "raw": "{{baseUrl}}/genres/{{genreId}}" }
+          }
+        },
+        {
+          "name": "Delete Genre",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/genres/{{genreId}}" }
           }
         }
       ]
@@ -84,17 +127,61 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/books?search=code&page=1&limit=10"
+              "raw": "{{baseUrl}}/books?genreId={{genreId}}&search=code&page=1&limit=10",
+              "query": [
+                { "key": "genreId", "value": "{{genreId}}" },
+                { "key": "search", "value": "code" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
             }
+          }
+        },
+        {
+          "name": "Get Book",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/books/{{bookId}}" }
           }
         },
         {
           "name": "Create Book",
           "request": {
             "method": "POST",
-            "url": {
-              "raw": "{{baseUrl}}/books"
-            }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\": \"Example Book\", \"author\": \"Example Author\", \"isbn\": \"9781234567890\", \"publishedYr\": 2024, \"totalCopies\": 5, \"genreId\": \"{{genreId}}\"}"
+            },
+            "url": { "raw": "{{baseUrl}}/books" }
+          }
+        },
+        {
+          "name": "Update Book",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"totalCopies\": 8}"
+            },
+            "url": { "raw": "{{baseUrl}}/books/{{bookId}}" }
+          }
+        },
+        {
+          "name": "Delete Book",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/books/{{bookId}}" }
           }
         }
       ]
@@ -106,6 +193,9 @@
           "name": "Get Profile",
           "request": {
             "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
             "url": {
               "raw": "{{baseUrl}}/users/profile"
             }
