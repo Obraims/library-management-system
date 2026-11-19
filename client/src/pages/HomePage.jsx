@@ -8,6 +8,7 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('default');
   const [genres, setGenres] = useState([]);
+  const [searchResetKey, setSearchResetKey] = useState(0);
 
   useEffect(() => {
     fetch(`${API_URL}/genres`)
@@ -24,6 +25,7 @@ export default function HomePage() {
     setGenreId('');
     setSearch('');
     setSortBy('default');
+    setSearchResetKey((k) => k + 1);
   };
 
   return (
@@ -40,7 +42,7 @@ export default function HomePage() {
 
       <section className="filters-toolbar">
         <div className="toolbar-search-col">
-          <SearchBar onSearch={setSearch} />
+          <SearchBar key={searchResetKey} onSearch={setSearch} />
         </div>
 
         <div className="toolbar-controls-col">

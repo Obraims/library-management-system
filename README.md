@@ -76,7 +76,7 @@ npm install
 Generate the Prisma Client and apply migrations:
 ```bash
 npx prisma generate
-npx prisma migrate dev --name init
+npx prisma migrate dev
 ```
 
 ### 5. Seeding the Database
@@ -91,10 +91,10 @@ Confirm your books and genres appear:
 npx prisma studio
 ```
 This script automatically inserts:
-- **4 Distinct Genres**: Fantasy, Science Fiction, Mystery, Biography (with unique slugs).
+- **5 Genres**: Fiction, Science Fiction, Fantasy, Mystery, Non-Fiction.
 - **16 Human-Curated Books**: Realistic titles and authors distributed across all genres.
 - **2 Users**: Demonstrating the `Role` enum (`PATRON` and `LIBRARIAN`).
-- **1 Sample Review**: Demonstrating the relations between `Book` and `User`.
+- **2 Spaces**: Bookable study and conference rooms.
 
 ### 6. Running the Application
 ```bash
