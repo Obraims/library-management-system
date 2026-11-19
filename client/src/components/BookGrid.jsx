@@ -1,84 +1,143 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import BookCard from './BookCard';
-import { BookOpen, AlertTriangle } from 'lucide-react';
+import { API_URL } from '../config/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+function SkeletonCard() {
+  return (
+    <div className="book-card skeleton-card">
+      <div className="skeleton-cover shimmer" />
+      <div className="book-card-body">
+        <div className="skeleton-line skeleton-tag shimmer" />
+        <div className="skeleton-line skeleton-title shimmer" />
+        <div className="skeleton-line skeleton-author shimmer" />
+      </div>
+      <div className="book-card-footer">
+        <div className="skeleton-line skeleton-footer shimmer" />
+      </div>
+    </div>
+  );
+}
 
-export default function BookGrid({ genreId, search }) {
+export default function BookGrid({ genreId, search, sortBy = 'default', onReset }) {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let isMounted = true;
+    let active = true;
     setLoading(true);
     setError(null);
 
-    const queryParams = new URLSearchParams();
-    if (genreId) queryParams.append('genreId', genreId);
-    if (search) queryParams.append('search', search);
+    const params = new URLSearchParams();
+    if (genreId) params.append('genreId', genreId);
+    if (search && search.trim()) params.append('search', search.trim());
+    params.append('limit', '100');
 
-    fetch(`${API_URL}/books?${queryParams.toString()}`)
+    const endpoint = `${API_URL}/books?${params.toString()}`;
+
+    fetch(endpoint)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load books');
         return res.json();
       })
-      .then((data) => {
-        if (isMounted) {
-          setBooks(Array.isArray(data) ? data : data.data || []);
-          setLoading(false);
-        }
+      .then((json) => {
+        if (!active) return;
+        const list = Array.isArray(json) ? json : json.data || [];
+        setBooks(list);
+        setLoading(false);
       })
       .catch((err) => {
-        if (isMounted) {
-          setError(err.message);
-          setLoading(false);
-        }
+        if (!active) return;
+        setError(err.message || 'Error connecting to the catalog.');
+        setLoading(false);
       });
 
     return () => {
-      isMounted = false;
+      active = false;
     };
   }, [genreId, search]);
 
+  const sortedList = [...books].sort((a, b) => {
+    if (sortBy === 'title-asc') return (a.title || '').localeCompare(b.title || '');
+    if (sortBy === 'title-desc') return (b.title || '').localeCompare(a.title || '');
+    if (sortBy === 'author-asc') return (a.author || '').localeCompare(b.author || '');
+    if (sortBy === 'author-desc') return (b.author || '').localeCompare(a.author || '');
+    return 0;
+  });
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3, 4, 5, 6].map((n) => (
-          <div key={n} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm animate-pulse space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        ))}
+      <div className="catalog-section">
+        <div className="catalog-header-info">
+          <p className="catalog-count-loading">Loading books...</p>
+        </div>
+        <div className="book-grid">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+            <SkeletonCard key={n} />
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-center text-red-700 space-y-2">
-        <AlertTriangle className="w-8 h-8 text-red-500 mx-auto" />
-        <p className="font-semibold">{error}</p>
+      <div className="catalog-section">
+        <div className="state-card error-card">
+          <div className="state-icon">⚠️</div>
+          <h3 className="state-title">Catalog Unavailable</h3>
+          <p className="state-description">{error}</p>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => window.location.reload()}
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
 
-  if (books.length === 0) {
+  if (sortedList.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-xl border border-gray-100 p-8">
-        <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-        <h3 className="text-lg font-medium text-gray-900">No books found</h3>
-        <p className="text-sm text-gray-500 mt-1">Try adjusting your search query or selecting a different genre.</p>
+      <div className="catalog-section">
+        <div className="state-card empty-card">
+          <div className="state-icon">🔍</div>
+          <h3 className="state-title">No Books Found</h3>
+          <p className="state-description">
+            {search || genreId
+              ? 'No books match the current search or genre filter.'
+              : 'There are no books currently listed.'}
+          </p>
+          {(search || genreId) && onReset && (
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onReset}
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {books.map((book) => (
-        <BookCard key={book.id} book={book} />
-      ))}
+    <div className="catalog-section">
+      <div className="catalog-header-info">
+        <p className="catalog-count">
+          Showing <strong>{sortedList.length}</strong> {sortedList.length === 1 ? 'book' : 'books'}
+          {search && <span> matching &ldquo;{search}&rdquo;</span>}
+        </p>
+      </div>
+
+      <div className="book-grid">
+        {sortedList.map((book) => (
+          <BookCard key={book.id} book={book} />
+        ))}
+      </div>
     </div>
   );
 }

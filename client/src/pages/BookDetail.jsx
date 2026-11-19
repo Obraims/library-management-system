@@ -1,100 +1,208 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useReadingList } from '../context/ReadingListContext';
-import { ArrowLeft, Bookmark, BookmarkCheck, BookOpen, Star } from 'lucide-react';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { API_URL } from '../config/api';
 
 export default function BookDetail() {
   const { id } = useParams();
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const { items, addBook, removeBook } = useReadingList();
-  const isSaved = items.some(item => item.id === id);
+  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+
     fetch(`${API_URL}/books/${id}`)
       .then((res) => {
-        if (!res.ok) throw new Error('Book not found');
+        if (!res.ok) {
+          throw new Error(res.status === 404 ? 'Book not found' : 'Failed to fetch book');
+        }
         return res.json();
       })
       .then((data) => {
+        if (!active) return;
         setBook(data);
         setLoading(false);
       })
       .catch((err) => {
+        if (!active) return;
         setError(err.message);
         setLoading(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12 flex justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+      <div className="book-detail-page">
+        <div className="back-nav">
+          <Link to="/" className="back-link">
+            ← Back to Catalog
+          </Link>
+        </div>
+
+        <div className="book-detail-card skeleton-detail">
+          <div className="detail-cover-skeleton shimmer" />
+          <div className="detail-content-skeleton">
+            <div className="skeleton-line skeleton-tag shimmer" />
+            <div className="skeleton-line skeleton-title-lg shimmer" />
+            <div className="skeleton-line skeleton-author-lg shimmer" />
+            <div className="skeleton-line skeleton-desc shimmer" />
+            <div className="skeleton-line skeleton-desc shimmer" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !book) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Book Not Found</h2>
-        <Link to="/" className="mt-4 inline-block text-indigo-600 font-medium hover:underline">
-          &larr; Back to Catalog
-        </Link>
+      <div className="book-detail-page">
+        <div className="back-nav">
+          <Link to="/" className="back-link">
+            ← Back to Catalog
+          </Link>
+        </div>
+
+        <div className="state-card error-card">
+          <div className="state-icon">⚠️</div>
+          <h2 className="state-title">Book Not Found</h2>
+          <p className="state-description">{error || 'Unable to load book details.'}</p>
+          <Link to="/" className="primary-button">
+            Back to Catalog
+          </Link>
+        </div>
       </div>
     );
   }
 
+  const isAvailable = (book.availableCopies ?? 1) > 0;
+  const genreName = book.genre?.name || 'General';
+  const reviews = book.reviews || [];
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      <Link to="/" className="inline-flex items-center space-x-1 text-sm font-medium text-indigo-600 hover:text-indigo-800">
-        <ArrowLeft className="w-4 h-4" />
-        <span>Back to Catalog</span>
-      </Link>
+    <div className="book-detail-page">
+      <div className="back-nav">
+        <Link to="/" className="back-link">
+          ← Back to Catalog
+        </Link>
+      </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-gray-200">
-          <div>
-            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700">
-              {book.genre?.name || 'General'}
-            </span>
-            <h1 className="text-3xl font-bold text-gray-900 mt-2">{book.title}</h1>
-            <p className="text-lg text-gray-600">by {book.author}</p>
+      <div className="book-detail-card">
+        <div className="detail-cover-wrapper">
+          {book.coverImage && !imageFailed ? (
+            <img
+              src={book.coverImage}
+              alt={book.title}
+              className="detail-cover-image"
+              onError={() => setImageFailed(true)}
+            />
+          ) : (
+            <div className={`detail-cover-fallback genre-${book.genre?.slug || 'default'}`}>
+              <span className="fallback-genre-pill">{genreName}</span>
+              <div className="fallback-text">
+                <h3 className="fallback-title">{book.title}</h3>
+                <p className="fallback-author">{book.author}</p>
+              </div>
+              <span className="fallback-book-icon">📖</span>
+            </div>
+          )}
+
+          <div className="detail-actions">
+            <button
+              type="button"
+              className={`primary-button borrow-button ${!isAvailable ? 'disabled' : ''}`}
+              disabled={!isAvailable}
+            >
+              {isAvailable ? 'Borrow Book' : 'Currently Unavailable'}
+            </button>
           </div>
-
-          <button
-            onClick={() => isSaved ? removeBook(book.id) : addBook(book)}
-            className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-              isSaved
-                ? 'bg-amber-100 text-amber-900 hover:bg-amber-200'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
-            }`}
-          >
-            {isSaved ? <BookmarkCheck className="w-5 h-5 text-amber-600" /> : <Bookmark className="w-5 h-5" />}
-            <span>{isSaved ? 'Saved to Reading List' : 'Add to Reading List'}</span>
-          </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
-          <div>
-            <span className="block text-xs text-gray-400">Published</span>
-            <span className="font-medium text-gray-900">{book.publishedYr}</span>
+        <div className="detail-content">
+          <div className="detail-header">
+            <div className="genre-pill-wrapper">
+              <span className="genre-tag large">{genreName}</span>
+              <span className={`availability-badge ${isAvailable ? 'badge-available' : 'badge-unavailable'}`}>
+                {isAvailable ? 'In Stock' : 'Checked Out'}
+              </span>
+            </div>
+
+            <h1 className="detail-title">{book.title}</h1>
+            <p className="detail-author">by <strong>{book.author}</strong></p>
           </div>
-          <div>
-            <span className="block text-xs text-gray-400">ISBN</span>
-            <span className="font-medium text-gray-900">{book.isbn}</span>
+
+          <div className="detail-availability-bar">
+            <div className="availability-metric">
+              <span className="metric-label">Copies</span>
+              <span className="metric-value">
+                <strong>{book.availableCopies ?? 0}</strong> of {book.totalCopies ?? 1} available
+              </span>
+            </div>
+            <div className="metric-progress-track">
+              <div
+                className="metric-progress-fill"
+                style={{
+                  width: `${book.totalCopies ? ((book.availableCopies ?? 0) / book.totalCopies) * 100 : 0}%`,
+                }}
+              />
+            </div>
           </div>
-          <div>
-            <span className="block text-xs text-gray-400">Total Copies</span>
-            <span className="font-medium text-gray-900">{book.totalCopies || 1}</span>
+
+          <div className="detail-metadata-grid">
+            <div className="meta-item">
+              <span className="meta-label">ISBN</span>
+              <span className="meta-value"><code>{book.isbn}</code></span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">ID</span>
+              <span className="meta-value">#{book.id}</span>
+            </div>
+            <div className="meta-item">
+              <span className="meta-label">Category</span>
+              <span className="meta-value">{genreName}</span>
+            </div>
+            {book.publishedYr && (
+              <div className="meta-item">
+                <span className="meta-label">Year</span>
+                <span className="meta-value">{book.publishedYr}</span>
+              </div>
+            )}
           </div>
-          <div>
-            <span className="block text-xs text-gray-400">Status</span>
-            <span className="font-medium text-emerald-600">Available</span>
+
+          {book.description && (
+            <div className="detail-description-section">
+              <h2 className="section-heading">Description</h2>
+              <p className="detail-description">{book.description}</p>
+            </div>
+          )}
+
+          <div className="detail-reviews-section">
+            <h2 className="section-heading">
+              Reviews {reviews.length > 0 && `(${reviews.length})`}
+            </h2>
+
+            {reviews.length === 0 ? (
+              <p className="no-reviews-note">No reviews yet for this book.</p>
+            ) : (
+              <div className="reviews-list">
+                {reviews.map((rev) => (
+                  <div key={rev.id} className="review-card">
+                    <div className="review-header">
+                      <div className="review-rating">
+                        {'★'.repeat(rev.rating)}{'☆'.repeat(Math.max(0, 5 - rev.rating))}
+                      </div>
+                    </div>
+                    {rev.comment && <p className="review-comment">&ldquo;{rev.comment}&rdquo;</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

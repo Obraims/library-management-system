@@ -1,31 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
-export default function SearchBar({ onSearch, initialValue = '' }) {
-  const [searchTerm, setSearchTerm] = useState(initialValue);
+export default function SearchBar({ onSearch, placeholder = 'Search by title or author...' }) {
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      onSearch(searchTerm);
-    }, 400);
+    const timer = setTimeout(() => {
+      onSearch(query);
+    }, 300);
 
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm, onSearch]);
+    return () => clearTimeout(timer);
+  }, [query, onSearch]);
 
   return (
-    <div className="relative w-full">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Search className="h-5 w-5 text-gray-400" />
+    <div className="search-bar">
+      <div className="search-input-container">
+        <svg
+          className="search-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="text"
+          className="search-input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={placeholder}
+        />
+        {query && (
+          <button
+            type="button"
+            className="clear-button"
+            onClick={() => setQuery('')}
+          >
+            ×
+          </button>
+        )}
       </div>
-      <input
-        type="text"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="Search books by title or author..."
-        className="block w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-      />
     </div>
   );
 }

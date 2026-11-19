@@ -1,6 +1,26 @@
+# Node & build outputs
 node_modules/
 dist/
-coverage/
-.env
+api/dist/
+api/node_modules/
+client/dist/
+client/node_modules/
+million/
+
+# Logs
 *.log
+npm-debug.log*
+
+# Environment
+.env
+api/.env
+!.env.example
+!api/.env.example
+!client/.env
+!client/.env.example
+
+# OS / Editor
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
