@@ -1,41 +1,39 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { ReadingListProvider } from './context/ReadingListContext';
-import { AuthProvider } from './context/AuthContext';
-import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
+import { Routes, Route, Link } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import BookDetail from './pages/BookDetail';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import SpaceBookingPage from './pages/SpaceBookingPage';
-import ReadingListPage from './pages/ReadingListPage';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ReadingListProvider>
-        <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/books/:id" element={<BookDetail />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/reading-list" element={<ReadingListPage />} />
-              <Route
-                path="/book-space"
-                element={
-                  <ProtectedRoute>
-                    <SpaceBookingPage />
-                  </ProtectedRoute>
-                }
-              />
-            </Routes>
-          </main>
+    <div className="app-shell">
+      <header className="site-header">
+        <div className="header-container">
+          <Link to="/" className="site-brand">
+            <span className="brand-logo" aria-hidden="true">📖</span>
+            <div className="brand-text">
+              <span className="brand-title">Athenaeum</span>
+              <span className="brand-tagline">Patron Library Catalog</span>
+            </div>
+          </Link>
+          <nav className="site-nav">
+            <Link to="/" className="nav-link">
+              Browse Catalog
+            </Link>
+          </nav>
         </div>
-      </ReadingListProvider>
-    </AuthProvider>
+      </header>
+
+      <main className="site-main">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/books/:id" element={<BookDetail />} />
+        </Routes>
+      </main>
+
+      <footer className="site-footer">
+        <div className="footer-container">
+          <p>© {new Date().getFullYear()} Athenaeum Library System. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
   );
 }

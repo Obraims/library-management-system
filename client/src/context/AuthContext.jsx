@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API_URL } from '../config/api';
 
 const AuthContext = createContext();
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -18,7 +17,7 @@ export function AuthProvider({ children }) {
       })
         .then(res => res.ok ? res.json() : null)
         .then(data => {
-          if (data) setUser(data);
+          if (data) setUser(data.user || data);
           setLoading(false);
         })
         .catch(() => {
@@ -42,7 +41,7 @@ export function AuthProvider({ children }) {
       throw new Error(err.message || 'Login failed');
     }
     const data = await res.json();
-    setToken(data.access_token);
+    setToken(data.accessToken || data.access_token);
     setUser(data.user || { email });
     return data;
   };
@@ -58,7 +57,7 @@ export function AuthProvider({ children }) {
       throw new Error(err.message || 'Registration failed');
     }
     const data = await res.json();
-    setToken(data.access_token);
+    setToken(data.accessToken || data.access_token);
     setUser(data.user || { name, email });
     return data;
   };
